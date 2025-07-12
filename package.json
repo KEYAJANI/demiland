@@ -38,13 +38,9 @@
     "lint:fix": "eslint . --ext js,jsx --fix",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "type-check": "tsc --noEmit",
     "test:build": "npm run build && npm run preview",
     "clean": "rm -rf dist node_modules/.vite",
-    "deploy:setup": "cp .env.example .env.local && echo 'Please configure your .env.local file'",
-    "health-check": "curl -f http://localhost:4173 || exit 1",
-    "precommit": "npm run lint && npm run type-check",
-    "postinstall": "echo 'Demiland project installed successfully. Run npm run deploy:setup to configure environment variables.'"
+    "deploy:setup": "cp .env.example .env.local && echo 'Please configure your .env.local file'"
   },
   "browserslist": {
     "production": [

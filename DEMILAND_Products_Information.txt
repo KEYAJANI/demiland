@@ -1,0 +1,196 @@
+DEMILAND PRODUCTS INFORMATION
+=============================
+
+This file contains detailed product information for all 8 DEMILAND beauty products.
+Use this information to create products in your Supabase database via the admin panel.
+
+=============================
+
+PRODUCT 1: Waterproof Mascara
+============================
+Category: Eyes
+Image: /products/1.jpg
+Description: Professional waterproof mascara with luxurious gold packaging. Delivers dramatic volume and length that lasts all day without smudging or flaking. The premium formula enhances natural lashes with intense black pigmentation and long-lasting wear.
+Features:
+- 100% Waterproof formula
+- Long-lasting 12+ hours
+- Volume & length enhancement
+- Smudge-proof technology
+- Premium gold packaging
+- Intense black pigmentation
+- Easy application brush
+Ingredients: Aqua, Synthetic Beeswax, Paraffin, Acacia Senegal Gum, Stearic Acid, Palmitic Acid, Iron Oxides, Carnauba Wax
+In Stock: Yes
+Featured: Yes
+Rating: 4.8
+Stock Quantity: 50
+
+=============================
+
+PRODUCT 2: Eyeliner Pencil
+==========================
+Category: Eyes
+Image: /products/2.jpg
+Description: Precision waterproof eyeliner pencil for defining and enhancing your eyes. Smooth application with intense color payoff that stays put all day. Perfect for creating sharp lines or smoky effects.
+Features:
+- Waterproof & long-lasting
+- Smooth glide application
+- Intense black pigmentation
+- Precise tip for fine lines
+- Smudge-resistant formula
+- Professional grade quality
+- Easy to sharpen
+Ingredients: Cyclopentasiloxane, Synthetic Wax, Hydrogenated Polyisobutene, Polybutene, Iron Oxides, Tocopherol
+In Stock: Yes
+Featured: No
+Rating: 4.5
+Stock Quantity: 75
+
+=============================
+
+PRODUCT 3: 5D Natural Lashes
+============================
+Category: Eyes
+Image: /products/3.jpg
+Description: Handcrafted 5D natural false eyelashes for a comfortable, soft, and dramatic look. Perfect for special occasions or everyday glamour. These premium lashes provide natural volume and length enhancement.
+Features:
+- 100% Handmade quality
+- 5D natural volume effect
+- Comfortable & lightweight
+- Soft natural hair fibers
+- Reusable up to 15 times
+- Natural-looking finish
+- Easy application
+Ingredients: Premium synthetic fibers, cotton band, hypoallergenic adhesive base
+In Stock: Yes
+Featured: Yes
+Rating: 4.9
+Stock Quantity: 30
+
+=============================
+
+PRODUCT 4: Premium Lip Color
+============================
+Category: Lips
+Image: /products/4.jpg
+Description: Rich, creamy lip color with long-lasting formula. Delivers vibrant pigmentation and smooth application for beautiful, kissable lips. The premium formula provides comfort and hydration while maintaining color intensity.
+Features:
+- Long-lasting formula
+- Creamy smooth texture
+- Vibrant color payoff
+- Moisturizing ingredients
+- Professional finish
+- Transfer-resistant
+- Comfortable wear
+Ingredients: Caprylic/Capric Triglyceride, Ozokerite, Synthetic Wax, Tocopherol, Vitamin E, Natural Oils
+In Stock: Yes
+Featured: No
+Rating: 4.3
+Stock Quantity: 40
+
+=============================
+
+PRODUCT 5: Lash Adhesive
+========================
+Category: Tools
+Image: /products/5.jpg
+Description: Professional transparent eyelash adhesive for secure and comfortable false lash application. Strong hold formula that dries clear and remains flexible. Perfect for both strip lashes and individual lashes.
+Features:
+- Transparent finish
+- Strong hold formula
+- Dries quickly
+- Waterproof bond
+- Easy removal
+- Professional grade
+- Suitable for sensitive eyes
+Ingredients: Acrylates Copolymer, Aqua, Propylene Glycol, Phenoxyethanol, Ethylhexylglycerin
+In Stock: Yes
+Featured: No
+Rating: 4.4
+Stock Quantity: 60
+
+=============================
+
+PRODUCT 6: Cotton Pads
+=====================
+Category: Tools
+Image: /products/6.jpg
+Description: Premium 100% pure cotton makeup removal pads. Ultra-soft and absorbent, perfect for gentle makeup removal and skincare application. Each pack contains 150 high-quality cotton pads.
+Features:
+- 100% Pure cotton
+- Ultra-soft texture
+- Highly absorbent
+- Lint-free quality
+- Gentle on skin
+- Multi-purpose use
+- 150 pads per pack
+Ingredients: 100% Pure Cotton Fiber
+In Stock: Yes
+Featured: No
+Rating: 4.2
+Stock Quantity: 80
+
+=============================
+
+PRODUCT 7: Powder Foundation
+===========================
+Category: Complexion
+Image: /products/7.jpg
+Description: Buildable coverage dual finish powder foundation for a flawless complexion. Provides natural-looking coverage that can be built up for fuller coverage. Compact design perfect for touch-ups throughout the day.
+Features:
+- Buildable coverage
+- Dual finish formula
+- Natural matte finish
+- Long-wearing
+- Travel-friendly compact
+- Suitable for all skin types
+- Professional finish
+Ingredients: Talc, Mica, Magnesium Stearate, Dimethicone, Phenoxyethanol, Iron Oxides, Titanium Dioxide
+In Stock: Yes
+Featured: Yes
+Rating: 4.7
+Stock Quantity: 45
+
+=============================
+
+PRODUCT 8: Eyebrow Gel Kit
+==========================
+Category: Eyes
+Image: /products/8.jpg
+Description: Professional eyebrow shaping wax kit with dual-ended brush and spoolie. Complete eyebrow grooming solution for perfectly shaped and defined brows. Clear gel formula holds brows in place all day.
+Features:
+- Professional eyebrow kit
+- Dual-ended applicator
+- Clear setting gel
+- Long-lasting hold
+- Natural finish
+- Easy application
+- Complete grooming solution
+Ingredients: Acrylates Copolymer, Aqua, Glycerin, Phenoxyethanol, Panthenol, Tocopherol
+In Stock: Yes
+Featured: No
+Rating: 4.6
+Stock Quantity: 35
+
+=============================
+
+CATEGORIES SUMMARY:
+==================
+- Eyes: 4 products (Mascara, Eyeliner, Lashes, Eyebrow Gel)
+- Lips: 1 product (Lip Color)
+- Complexion: 1 product (Powder Foundation)
+- Tools: 2 products (Cotton Pads, Lash Adhesive)
+
+FEATURED PRODUCTS: Waterproof Mascara, 5D Natural Lashes, Powder Foundation
+
+=============================
+END OF PRODUCT INFORMATION
+=============================
+
+Instructions for Admin Panel:
+1. Copy each product's information section
+2. Create new product in admin dashboard
+3. Upload the corresponding image from /products/ folder to ImageKit
+4. Fill in all the details as provided above
+5. Set the featured status as indicated
+6. Use the suggested stock quantities and ratings

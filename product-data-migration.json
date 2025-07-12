@@ -1,0 +1,206 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Waterproof Mascara",
+      "category": "Eyes",
+      "image": "/products/1.jpg",
+      "description": "Professional waterproof mascara with luxurious gold packaging. Delivers dramatic volume and length that lasts all day without smudging or flaking.",
+      "features": [
+        "100% Waterproof formula",
+        "Long-lasting 12+ hours",
+        "Volume & length enhancement",
+        "Smudge-proof technology",
+        "Premium gold packaging"
+      ],
+      "ingredients": "Aqua, Synthetic Beeswax, Paraffin, Acacia Senegal Gum, Stearic Acid, Palmitic Acid",
+      "inStock": true,
+      "featured": true,
+      "price": 29.99,
+      "stock_quantity": 150
+    },
+    {
+      "id": 2,
+      "name": "Eyeliner Pencil",
+      "category": "Eyes",
+      "image": "/products/2.jpg",
+      "description": "Precision waterproof eyeliner pencil for defining and enhancing your eyes. Smooth application with intense color payoff that stays put all day.",
+      "features": [
+        "Waterproof & long-lasting",
+        "Smooth glide application",
+        "Intense black pigmentation",
+        "Precise tip for fine lines",
+        "Smudge-resistant formula"
+      ],
+      "ingredients": "Cyclopentasiloxane, Synthetic Wax, Hydrogenated Polyisobutene, Polybutene",
+      "inStock": true,
+      "featured": false,
+      "price": 19.99,
+      "stock_quantity": 200
+    },
+    {
+      "id": 3,
+      "name": "5D Natural Lashes",
+      "category": "Eyes",
+      "image": "/products/3.jpg",
+      "description": "Handcrafted 5D natural false eyelashes for a comfortable, soft, and dramatic look. Perfect for special occasions or everyday glamour.",
+      "features": [
+        "100% Handmade quality",
+        "5D natural volume effect",
+        "Comfortable & lightweight",
+        "Soft natural hair fibers",
+        "Reusable up to 15 times"
+      ],
+      "ingredients": "Premium synthetic fibers, cotton band, hypoallergenic adhesive",
+      "inStock": true,
+      "featured": true,
+      "price": 24.99,
+      "stock_quantity": 75
+    },
+    {
+      "id": 4,
+      "name": "Premium Lip Color",
+      "category": "Lips",
+      "image": "/products/4.jpg",
+      "description": "Rich, creamy lip color with long-lasting formula. Delivers vibrant pigmentation and smooth application for beautiful, kissable lips.",
+      "features": [
+        "Long-lasting formula",
+        "Creamy smooth texture",
+        "Vibrant color payoff",
+        "Moisturizing ingredients",
+        "Professional finish"
+      ],
+      "ingredients": "Caprylic/Capric Triglyceride, Ozokerite, Synthetic Wax, Tocopherol",
+      "inStock": true,
+      "featured": false,
+      "price": 34.99,
+      "stock_quantity": 120
+    },
+    {
+      "id": 5,
+      "name": "Professional Makeup Brush Set",
+      "category": "Tools",
+      "image": "/products/5.jpg",
+      "description": "Complete professional makeup brush collection for flawless application. Premium synthetic bristles designed for precision and perfect blending.",
+      "features": [
+        "Professional grade brushes",
+        "Synthetic cruelty-free bristles",
+        "Ergonomic handles",
+        "Complete face & eye set",
+        "Easy to clean & maintain"
+      ],
+      "ingredients": "Synthetic taklon bristles, aluminum ferrule, wooden handles",
+      "inStock": true,
+      "featured": true,
+      "price": 89.99,
+      "stock_quantity": 50
+    },
+    {
+      "id": 6,
+      "name": "Luxury Foundation",
+      "category": "Complexion",
+      "image": "/products/6.jpg",
+      "description": "Full coverage luxury foundation with a natural finish. Provides flawless complexion while nourishing your skin with premium ingredients.",
+      "features": [
+        "Full coverage formula",
+        "Natural matte finish",
+        "24-hour wear time",
+        "Buildable coverage",
+        "Skin-nourishing formula"
+      ],
+      "ingredients": "Aqua, Cyclopentasiloxane, Dimethicone, Glycerin, Titanium Dioxide",
+      "inStock": true,
+      "featured": false,
+      "price": 54.99,
+      "stock_quantity": 80
+    },
+    {
+      "id": 7,
+      "name": "Nail Art Collection",
+      "category": "Nails",
+      "image": "/products/7.jpg",
+      "description": "Professional nail art accessories and decorative elements. Create stunning nail designs with our premium collection of nail art supplies.",
+      "features": [
+        "Professional nail art tools",
+        "Variety of decorative elements",
+        "Long-lasting adhesion",
+        "Easy application",
+        "Salon-quality results"
+      ],
+      "ingredients": "Acrylic polymers, adhesive compounds, decorative materials",
+      "inStock": true,
+      "featured": false,
+      "price": 39.99,
+      "stock_quantity": 100
+    },
+    {
+      "id": 8,
+      "name": "Contour Palette",
+      "category": "Complexion",
+      "image": "/products/8.jpg",
+      "description": "Professional contour and highlight palette for sculpting and defining facial features. Includes warm and cool tones for all skin types.",
+      "features": [
+        "Multi-shade palette",
+        "Blendable powder formula",
+        "Suitable for all skin tones",
+        "Professional finish",
+        "Compact travel-friendly design"
+      ],
+      "ingredients": "Talc, Mica, Magnesium Stearate, Dimethicone, Phenoxyethanol",
+      "inStock": true,
+      "featured": true,
+      "price": 44.99,
+      "stock_quantity": 60
+    }
+  ],
+  "categories": [
+    {
+      "id": "all",
+      "name": "All Products",
+      "slug": "all",
+      "description": "Browse all DEMILAND products"
+    },
+    {
+      "id": "eyes",
+      "name": "Eyes",
+      "slug": "eyes",
+      "description": "Eye makeup products including mascara, eyeliner, and eyeshadow"
+    },
+    {
+      "id": "lips",
+      "name": "Lips",
+      "slug": "lips",
+      "description": "Lip products including lipstick, gloss, and lip care"
+    },
+    {
+      "id": "complexion",
+      "name": "Complexion",
+      "slug": "complexion",
+      "description": "Face makeup including foundation, concealer, and powder"
+    },
+    {
+      "id": "nails",
+      "name": "Nails",
+      "slug": "nails",
+      "description": "Nail care and nail art products"
+    },
+    {
+      "id": "tools",
+      "name": "Tools",
+      "slug": "tools",
+      "description": "Makeup tools and accessories"
+    }
+  ],
+  "migration_notes": {
+    "purpose": "This file contains the existing DEMILAND product data for backend migration",
+    "usage": "Use this data to populate your database when setting up the Flask backend",
+    "api_integration": "The frontend API service is already configured to work with these data structures",
+    "real_time_sync": "Product changes in admin dashboard will sync with frontend through the productService",
+    "next_steps": [
+      "Import this data into your PostgreSQL database",
+      "Set up Flask API endpoints to serve this data",
+      "Test real-time synchronization between admin dashboard and frontend",
+      "Add product images to your CDN or static file server"
+    ]
+  }
+}

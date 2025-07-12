@@ -57,8 +57,8 @@ const Navbar = ({ isHomepage = false }) => {
                 style={{ cursor: 'pointer' }}
               >
                 <img 
-                  src="/demiland_logo_png.png" 
-                  alt="Demiland" 
+                  src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                  alt="DEMILAND luxury beauty cosmetics logo" 
                   className="w-10 h-10 object-contain"
                 />
                 <span className={`text-xl font-medium transition-colors duration-300 ${

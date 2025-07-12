@@ -163,8 +163,8 @@ const AuthPage = () => {
             >
               <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
                 <img 
-                  src="/demiland_logo_png.png" 
-                  alt="DEMILAND" 
+                  src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                  alt="DEMILAND luxury beauty cosmetics logo" 
                   className="w-14 h-14 object-contain filter brightness-0 invert"
                 />
               </div>

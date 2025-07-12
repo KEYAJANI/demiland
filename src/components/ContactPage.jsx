@@ -393,8 +393,8 @@ const ContactPage = () => {
               <div className="bg-gradient-to-br from-demiland-50 to-white p-10 rounded-3xl border border-demiland-100 shadow-sm">
                 <div className="flex items-center space-x-4 mb-6">
                   <img 
-                    src="/demiland_logo_png.png" 
-                    alt="DEMILAND" 
+                    src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                    alt="DEMILAND luxury beauty cosmetics logo" 
                     className="w-12 h-12 object-contain"
                   />
                   <h3 className="text-2xl font-light text-charcoal-800">DEMILAND Atelier</h3>

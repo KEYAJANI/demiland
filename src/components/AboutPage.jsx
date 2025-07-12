@@ -132,8 +132,8 @@ const AboutPage = () => {
               <div className="relative z-10 flex flex-col items-center justify-center h-full text-center p-8">
                 <div className="w-32 h-32 bg-gradient-to-br from-demiland-500 to-demiland-700 rounded-full flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
                   <img 
-                    src="/demiland_logo_png.png" 
-                    alt="DEMILAND" 
+                    src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                    alt="DEMILAND luxury beauty cosmetics logo" 
                     className="w-16 h-16 object-contain filter brightness-0 invert"
                   />
                 </div>
@@ -492,8 +492,8 @@ const AboutPage = () => {
                   {/* Decorative Logo */}
                   <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center backdrop-blur-sm border border-white/30">
                     <img 
-                      src="/demiland_logo_png.png" 
-                      alt="DEMILAND" 
+                      src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                      alt="DEMILAND luxury beauty cosmetics logo" 
                       className="w-16 h-16 object-contain filter brightness-0 invert"
                     />
                   </div>

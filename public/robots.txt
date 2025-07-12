@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Sitemap location (update with your actual domain)
+Sitemap: https://demiland.com/sitemap.xml
+
+# Crawl-delay to be respectful to servers
+Crawl-delay: 1
+
+# Allow all search engines to crawl all content
+# Future: Add restrictions for admin areas when implemented
+# Disallow: /admin/
+# Disallow: /private/

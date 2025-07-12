@@ -13,8 +13,8 @@ const Footer = () => {
           <div className="md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
               <img 
-                src="/demiland_logo_png.png" 
-                alt="Demiland" 
+                src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                alt="DEMILAND luxury beauty cosmetics logo" 
                 className="w-8 h-8 object-contain"
               />
               <span className="text-2xl font-medium text-demiland-400">DEMILAND</span>

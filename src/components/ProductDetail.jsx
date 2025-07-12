@@ -134,8 +134,8 @@ const ProductDetail = ({ productId }) => {
                 {/* DEMILAND Watermark */}
                 <div className="absolute bottom-6 right-6 opacity-20">
                   <img 
-                    src="/demiland_logo_png.png" 
-                    alt="DEMILAND" 
+                    src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                    alt="DEMILAND luxury beauty cosmetics logo" 
                     className="w-12 h-12 object-contain"
                   />
                 </div>
@@ -159,8 +159,8 @@ const ProductDetail = ({ productId }) => {
               <div>
                 <div className="flex items-center space-x-3 mb-4">
                   <img 
-                    src="/demiland_logo_png.png" 
-                    alt="DEMILAND" 
+                    src="https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597" 
+                    alt="DEMILAND luxury beauty cosmetics logo" 
                     className="w-8 h-8 object-contain"
                   />
                   <span className="text-demiland-600 font-medium">DEMILAND</span>

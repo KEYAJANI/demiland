@@ -172,7 +172,7 @@ const Homepage = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
           style={{
-            backgroundImage: `url('/demiland_banner.jpg')`,
+            backgroundImage: `url('https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_banner.jpg?updatedAt=1752315169814')`,
           }}
         />
         
@@ -180,7 +180,7 @@ const Homepage = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
           style={{
-            backgroundImage: `url('/demiland_banner_phoneScreen.jpg')`,
+            backgroundImage: `url('https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_banner_phoneScreen.jpg?updatedAt=1752315169807')`,
           }}
         />
         

@@ -1,18 +1,19 @@
 {
-  "name": "Beauty Brand",
-  "short_name": "BeautyBrand",
+  "name": "DEMILAND - Luxury Beauty",
+  "short_name": "DEMILAND",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#e11d48",
+  "theme_color": "#b8a4d9",
+  "description": "Discover DEMILAND's exquisite collection of premium cosmetics where elegance meets innovation",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://ik.imagekit.io/oriwj2eis/Demiland_imgs/demiland_logo_png.png?updatedAt=1752315168597",
       "sizes": "512x512",
       "type": "image/png"
     }

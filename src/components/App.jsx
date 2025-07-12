@@ -24,6 +24,13 @@ const AuthContext = createContext();
 const ProductContext = createContext();
 const UIContext = createContext();
 
+// PWA Detection utility
+const isPWA = () => {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true ||
+         document.referrer.includes('android-app://');
+};
+
 // Auth Context Provider
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -719,6 +726,19 @@ export const UIProvider = ({ children }) => {
   const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [confirmationDialog, setConfirmationDialog] = useState(null);
+  const [isPWAMode, setIsPWAMode] = useState(false);
+
+  // Detect PWA mode on component mount
+  useEffect(() => {
+    setIsPWAMode(isPWA());
+    
+    // Add event listener for display mode changes
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleDisplayModeChange = () => setIsPWAMode(isPWA());
+    
+    mediaQuery.addEventListener('change', handleDisplayModeChange);
+    return () => mediaQuery.removeEventListener('change', handleDisplayModeChange);
+  }, []);
 
   const showNotification = (message, type = 'info') => {
     const id = Date.now();
@@ -768,7 +788,8 @@ export const UIProvider = ({ children }) => {
       theme,
       setTheme,
       sidebarOpen,
-      setSidebarOpen
+      setSidebarOpen,
+      isPWAMode
     }}>
       {children}
     </UIContext.Provider>

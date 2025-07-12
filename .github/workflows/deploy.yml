@@ -1,0 +1,139 @@
+name: Deploy Demiland Beauty Brand
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Quality checks for all branches
+  quality-check:
+    runs-on: ubuntu-latest
+    name: Code Quality Check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npm run lint
+        
+      - name: Run TypeScript check
+        run: npm run type-check
+        
+      - name: Test build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+  # Build and test for production (main branch)
+  build-production:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: github.ref == 'refs/heads/main'
+    name: Production Build Test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for production
+        run: npm run build:prod
+        env:
+          NODE_ENV: production
+          VITE_ENVIRONMENT: production
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_PROD }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_PROD }}
+          VITE_APP_NAME: DEMILAND
+          VITE_APP_VERSION: 1.0.0
+          
+      - name: Upload production build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: dist/
+          retention-days: 7
+
+  # Build and test for staging (dev branch)
+  build-staging:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: github.ref == 'refs/heads/dev'
+    name: Staging Build Test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for staging
+        run: npm run build:staging
+        env:
+          NODE_ENV: staging
+          VITE_ENVIRONMENT: staging
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL_STAGING }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY_STAGING }}
+          VITE_APP_NAME: DEMILAND-DEV
+          VITE_APP_VERSION: 1.0.0-dev
+          VITE_DEBUG_MODE: true
+          
+      - name: Upload staging build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-build
+          path: dist/
+          retention-days: 7
+
+  # Notify deployment status
+  notify-status:
+    runs-on: ubuntu-latest
+    needs: [build-production, build-staging]
+    if: always()
+    name: Deployment Status
+    
+    steps:
+      - name: Deployment Success
+        if: needs.build-production.result == 'success' || needs.build-staging.result == 'success'
+        run: |
+          echo "✅ Demiland deployment build completed successfully!"
+          echo "🔗 Production: https://demiland-production.onrender.com"
+          echo "🔗 Staging: https://demiland-staging.onrender.com"
+          
+      - name: Deployment Failed
+        if: needs.build-production.result == 'failure' || needs.build-staging.result == 'failure'
+        run: |
+          echo "❌ Demiland deployment build failed!"
+          echo "Please check the build logs and fix any issues."
+          exit 1

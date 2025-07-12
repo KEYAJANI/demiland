@@ -190,4 +190,61 @@ To create admin users, update user metadata in Supabase Auth:
 - **Production**: Requires fully configured Supabase backend
 - All components are designed to work in both modes seamlessly
 
-This project is built as a production-ready beauty brand website with a comprehensive admin system, real-time features, and professional e-commerce functionality.
+## Deployment Architecture
+
+### Three-Tier Deployment Strategy
+The project is configured for professional deployment with:
+
+**Production Environment (main branch)**
+- URL: `demiland-production.onrender.com`
+- Auto-deploys from `main` branch
+- Optimized build with `npm run build:prod`
+- Production Supabase configuration
+
+**Staging Environment (dev branch)**
+- URL: `demiland-staging.onrender.com`  
+- Auto-deploys from `dev` branch
+- Debug-enabled build with `npm run build:staging`
+- Staging Supabase configuration
+
+**Local Development**
+- URL: `localhost:5173`
+- Hot reload with `npm run dev`
+- Development environment variables
+
+### Deployment Commands
+- `npm run build:prod` - Production optimized build
+- `npm run build:staging` - Staging build with debug info
+- `npm run test:build` - Test production build locally
+- `npm run deploy:setup` - Copy environment template
+
+### Infrastructure as Code
+- `render.yaml` - Render.com deployment configuration
+- `.github/workflows/deploy.yml` - GitHub Actions CI/CD
+- Automatic deployments with branch-based environments
+
+### Environment Variables by Environment
+**All Environments:**
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+
+**Production Specific:**
+- `NODE_ENV=production`
+- `VITE_ENVIRONMENT=production`
+- Console logging disabled for performance
+
+**Staging Specific:**
+- `NODE_ENV=staging`
+- `VITE_ENVIRONMENT=staging`
+- `VITE_DEBUG_MODE=true`
+- Enhanced debugging and logging
+
+### Deployment Workflow
+1. **Feature Development**: Work on feature branches from `dev`
+2. **Staging Testing**: Merge to `dev` → auto-deploy to staging
+3. **Production Release**: PR from `dev` to `main` → auto-deploy to production
+4. **Quality Gates**: ESLint, TypeScript, and build checks on all PRs
+
+See `DEPLOYMENT.md` for complete setup instructions.
+
+This project is built as a production-ready beauty brand website with a comprehensive admin system, real-time features, professional e-commerce functionality, and enterprise-grade deployment pipeline.

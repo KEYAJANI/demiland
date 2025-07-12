@@ -167,7 +167,11 @@ const Homepage = () => {
     <div className="min-h-screen bg-white">
 
       {/* DEMILAND Hero Section with Banner Background */}
-      <section className="relative h-screen overflow-hidden hero-full-screen">
+      <section className="relative overflow-hidden hero-full-screen" style={{ 
+        height: '100vh', 
+        paddingTop: 'env(safe-area-inset-top)',
+        marginTop: 'calc(-1 * env(safe-area-inset-top))'
+      }}>
         {/* Desktop Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
@@ -185,7 +189,9 @@ const Homepage = () => {
         />
         
         {/* Content positioned at bottom with responsive design */}
-        <div className="relative z-10 h-full flex flex-col justify-end pb-20">
+        <div className="relative z-10 h-full flex flex-col justify-end" style={{ 
+          paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))'
+        }}>
           <div className="max-w-6xl mx-auto px-6 w-full">
             <motion.div 
               className="max-w-xl md:max-w-2xl"

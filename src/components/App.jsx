@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, AlertCircle, Info, X, AlertTriangle } from 'lucide-react';
 import productService from '../services/productService.js';
 import authService from '../services/authService.js';
-import { supabase } from '../services/supabase.js';
-// Mock data removed - using Supabase only
+// MySQL-based authentication - no Supabase dependency
 
 // Import all page components
 import Homepage from './Homepage';
@@ -162,23 +161,15 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('🔄 Gentle background session check...');
       
-      // Try to get current session from Supabase (non-invasive)
-      const { data: { session }, error } = await supabase.auth.getSession();
+      // Use MySQL auth service to check current session
+      const currentUser = authService.getCurrentUser();
       
-      if (!error && session?.user) {
-        const roleFromAuth = session.user.user_metadata?.role || session.user.raw_user_meta_data?.role;
-        
-        // Only update if role has changed
-        if (roleFromAuth && roleFromAuth !== cachedUser.role) {
-          console.log('📊 Role updated in background:', roleFromAuth);
-          const updatedUser = { ...cachedUser, role: roleFromAuth };
-          setUser(updatedUser);
-          setUserRole(roleFromAuth);
-          localStorage.setItem('demiland_user', JSON.stringify(updatedUser));
-        }
-      } else if (error) {
-        console.log('ℹ️ Background session check completed with info:', error.message);
-        // Don't take any action on background errors
+      if (currentUser && currentUser.role !== cachedUser.role) {
+        console.log('📊 Role updated in background:', currentUser.role);
+        const updatedUser = { ...cachedUser, role: currentUser.role };
+        setUser(updatedUser);
+        setUserRole(currentUser.role);
+        localStorage.setItem('demiland_user', JSON.stringify(updatedUser));
       }
     } catch (error) {
       console.log('ℹ️ Background validation skipped due to:', error.message);

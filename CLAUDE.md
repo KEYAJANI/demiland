@@ -12,14 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Code Quality
 - `npm run lint` - Run ESLint to check code quality
 - `npm run format` - Format code with Prettier
-- `npm run type-check` - Run TypeScript type checking
 
 ### Database & Backend
 - `node test-database.js` - Test Supabase database connectivity
+- `node test-mysql-database.js` - Test MySQL database connectivity
 - `node src/services/supabase-test.js` - Run comprehensive Supabase service tests
-- Check `setup-database.md` for database migration and seeding instructions
-- Database schema available in `database-migration.sql`
+- `node export-supabase-data.js` - Export Supabase data for MySQL migration
+- Database schemas: `database-migration.sql` (PostgreSQL) and `database-migration-mysql.sql` (MySQL)
 - Product data for import in `product-data-migration.json`
+- MySQL migration guide in `MYSQL_MIGRATION_GUIDE.md`
 
 ### Installation
 - `npm install` - Install all dependencies
@@ -33,8 +34,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Vite** as build tool and development server
 - **Tailwind CSS** for styling with custom Demiland brand configuration
 - **Framer Motion** for animations and page transitions
-- **Supabase** for backend database, authentication, and real-time features
-- **PostgreSQL** database with Row Level Security (RLS)
+- **Database Options**: Supabase (PostgreSQL) or MySQL with custom auth
+- **Authentication**: Supabase Auth or JWT-based with bcrypt
 - **ImageKit** for image storage and CDN (configured in imagekitService.js)
 - **ESLint** for code quality
 
@@ -89,12 +90,15 @@ The application operates in a **hybrid mode** with intelligent fallbacks:
 - Maintains full functionality during development
 
 ### Service Layer Architecture
-The application uses a sophisticated service layer in `src/services/`:
+The application uses a sophisticated service layer in `src/services/` with support for both Supabase and MySQL:
 
 **Core Services**:
 - `supabase.js` - Supabase client configuration and database helpers
+- `mysql.js` - MySQL connection service and database helpers
 - `authService.js` - Authentication with Supabase Auth + user role management
+- `authService-mysql.js` - JWT-based authentication for MySQL
 - `productService.js` - Product CRUD operations with real-time subscriptions
+- `productService-mysql.js` - MySQL-based product operations with polling
 - `api.js` - API abstraction layer with fallback mechanisms
 - `imagekitService.js` - Image upload and CDN management
 
@@ -134,24 +138,55 @@ The application uses a sophisticated service layer in `src/services/`:
 
 ## Environment Setup
 
-### Required Environment Variables
-Create `.env.local` in the project root with:
+### Database Options
 
+**Option 1: Supabase (Default)**
+Create `.env.local` with:
 ```bash
 # Supabase Configuration
 VITE_SUPABASE_URL=your-supabase-project-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 
-# Optional: ImageKit Configuration (for image uploads)
+# Optional: ImageKit Configuration
+VITE_IMAGEKIT_URL=your-imagekit-url
+VITE_IMAGEKIT_PUBLIC_KEY=your-imagekit-public-key
+```
+
+**Option 2: MySQL**
+Copy template and configure:
+```bash
+cp .env.mysql.example .env.local
+```
+Update with your MySQL credentials:
+```bash
+# MySQL Configuration
+VITE_MYSQL_HOST=localhost
+VITE_MYSQL_PORT=3306
+VITE_MYSQL_USER=your_username
+VITE_MYSQL_PASSWORD=your_password
+VITE_MYSQL_DATABASE=demiland_beauty
+VITE_JWT_SECRET=your-secure-jwt-secret
+
+# ImageKit (recommended to keep)
 VITE_IMAGEKIT_URL=your-imagekit-url
 VITE_IMAGEKIT_PUBLIC_KEY=your-imagekit-public-key
 ```
 
 ### Database Setup
+
+**For Supabase (PostgreSQL):**
 1. **Create Supabase Project**: Sign up at https://supabase.com
 2. **Run Migration**: Execute `database-migration.sql` in Supabase SQL Editor
 3. **Import Products**: Follow instructions in `setup-database.md`
 4. **Test Connection**: Run `node test-database.js`
+
+**For MySQL:**
+1. **Install MySQL 8.0+** and create database: `CREATE DATABASE demiland_beauty;`
+2. **Run Schema Migration**: `mysql -u username -p demiland_beauty < database-migration-mysql.sql`
+3. **Export from Supabase** (if migrating): `node export-supabase-data.js`
+4. **Import Data**: `mysql -u username -p demiland_beauty < supabase-exports/mysql-data-import.sql`
+5. **Test Connection**: Run `node test-mysql-database.js`
+6. **Migration Guide**: See `MYSQL_MIGRATION_GUIDE.md` for complete instructions
 
 ### Admin User Setup
 To create admin users, update user metadata in Supabase Auth:

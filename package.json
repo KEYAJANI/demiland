@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "React wireframes for a modern beauty brand web store with showroom functionality",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "@tailwindcss/aspect-ratio": "^0.4.2",
@@ -10,8 +11,11 @@
     "@tailwindcss/typography": "^0.5.16",
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.21",
+    "bcryptjs": "^2.4.3",
     "framer-motion": "^10.16.16",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.525.0",
+    "mysql2": "^3.6.5",
     "postcss": "^8.5.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -40,7 +44,12 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "test:build": "npm run build && npm run preview",
     "clean": "rm -rf dist node_modules/.vite",
-    "deploy:setup": "cp .env.example .env.local && echo 'Please configure your .env.local file'"
+    "deploy:setup": "cp .env.example .env.local && echo 'Please configure your .env.local file'",
+    "server": "cd server && npm run dev",
+    "server:start": "cd server && npm start",
+    "server:install": "cd server && npm install",
+    "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
+    "setup": "npm install && npm run server:install"
   },
   "browserslist": {
     "production": [

@@ -47,7 +47,19 @@
       "mcp__puppeteer__puppeteer_evaluate",
       "mcp__puppeteer__puppeteer_click",
       "mcp__puppeteer__puppeteer_fill",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(mysql:*)",
+      "Bash(chmod:*)",
+      "Bash(dos2unix:*)",
+      "Bash(sed:*)",
+      "Bash(./setup-mysql.sh:*)",
+      "Bash(sudo mysql:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(NODE_ENV=development node src/server.js)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }

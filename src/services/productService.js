@@ -1,567 +1,370 @@
-import apiService from './api.js';
-import { supabase, productHelpers, TABLES } from './supabase.js';
-// Mock data removed - using Supabase only
+// Product Service for DEMILAND Frontend
+// Updated to work with Express.js backend API
 
-// Product Service for DEMILAND - handles all product-related API calls
-// Updated to work with Supabase
+import imagekitService from './imagekitService.js';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 class ProductService {
   constructor() {
-    this.useSupabase = true; // Use Supabase by default
+    this.listeners = [];
+    this.cache = new Map();
+    this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+    this.imageKit = imagekitService;
   }
-  // Get all products (for frontend product page)
+
+  // Event listeners for product changes
+  onProductChange(callback) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(listener => listener !== callback);
+    };
+  }
+
+  notifyListeners(action, product) {
+    this.listeners.forEach(listener => {
+      try {
+        listener({ action, product });
+      } catch (error) {
+        console.error('Product listener error:', error);
+      }
+    });
+  }
+
+  // HTTP request helper
+  async makeRequest(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    // Add token if available for admin operations
+    const token = localStorage.getItem('demiland_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      return { 
+        success: response.ok, 
+        data: data.data || data, 
+        message: data.message,
+        status: response.status
+      };
+
+    } catch (error) {
+      console.error('API Request failed:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        message: error.message 
+      };
+    }
+  }
+
+  // Cache management
+  getCached(key) {
+    const cached = this.cache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+      return cached.data;
+    }
+    return null;
+  }
+
+  setCache(key, data) {
+    this.cache.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  clearCache() {
+    this.cache.clear();
+  }
+
+  // Get all products
   async getAllProducts(params = {}) {
-    if (this.useSupabase) {
-      try {
-        console.log('🛍️ ProductService.getAllProducts called with params:', params);
-        
-        const filters = {
-          category: params.category,
-          featured: params.featured,
-          inStock: params.inStock,
-          search: params.search
-        };
-        
-        console.log('🔍 Calling productHelpers.getAllProducts with filters:', filters);
-        
-        const { data, error } = await productHelpers.getAllProducts(filters);
-        
-        console.log('📊 Raw Supabase response:', { data, error });
-        
-        if (error) {
-          console.error('❌ Supabase error in getAllProducts:', error);
-          console.error('❌ Error details:', {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-          });
-          
-          return {
-            success: false,
-            data: [],
-            message: `Database error: ${error.message || 'Failed to load products'}`
-          };
-        }
-        
-        console.log('✅ Products loaded successfully:', {
-          count: data?.length || 0,
-          firstProduct: data?.[0]?.name || 'No products'
-        });
-        
-        return {
-          success: true,
-          data: data || [],
-          message: 'Products loaded successfully'
-        };
-      } catch (error) {
-        console.error('❌ Unexpected error in getAllProducts:', error);
-        console.error('❌ Error stack:', error.stack);
-        
-        return {
-          success: false,
-          data: [],
-          message: `Unexpected error: ${error.message || 'Failed to load products'}`
-        };
-      }
+    console.log('📦 Fetching all products');
+    
+    const cacheKey = `products_${JSON.stringify(params)}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
 
-    // Fallback to traditional API
-    try {
-      const queryParams = new URLSearchParams();
-      
-      // Add pagination
-      if (params.page) queryParams.append('page', params.page);
-      if (params.limit) queryParams.append('limit', params.limit);
-      
-      // Add search
-      if (params.search) queryParams.append('search', params.search);
-      
-      // Add category filter
-      if (params.category && params.category !== 'all') {
-        queryParams.append('category', params.category);
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null) {
+        queryParams.append(key, params[key]);
       }
-      
-      // Add other filters
-      if (params.minPrice) queryParams.append('minPrice', params.minPrice);
-      if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice);
-      if (params.inStock !== undefined) queryParams.append('inStock', params.inStock);
-      if (params.featured !== undefined) queryParams.append('featured', params.featured);
-      
-      const queryString = queryParams.toString();
-      const endpoint = `/products${queryString ? `?${queryString}` : ''}`;
-      
-      return await apiService.get(endpoint);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      throw error;
+    });
+
+    const endpoint = `/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const result = await this.makeRequest(endpoint);
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log(`✅ Fetched ${result.data?.length || 0} products`);
+    } else {
+      console.error('❌ Failed to fetch products:', result.message);
     }
+
+    return result;
   }
 
-  // Get single product by ID
+  // Get product by ID
   async getProductById(id) {
-    if (this.useSupabase) {
-      try {
-        const { data, error } = await productHelpers.getProduct(id);
-        
-        if (error) {
-          console.error('Supabase error:', error);
-          return {
-            success: false,
-            data: null,
-            message: error.message || 'Product not found'
-          };
-        }
-        
-        return {
-          success: true,
-          data,
-          message: 'Product loaded successfully'
-        };
-      } catch (error) {
-        console.error('Supabase error:', error);
-        return {
-          success: false,
-          data: null,
-          message: error.message || 'Product not found'
-        };
-      }
+    console.log('🔍 Fetching product:', id);
+    
+    const cacheKey = `product_${id}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
 
-    // Fallback to traditional API
-    try {
-      return await apiService.get(`/products/${id}`);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      throw error;
+    const result = await this.makeRequest(`/products/${id}`);
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log('✅ Product fetched:', result.data?.name);
+    } else {
+      console.error('❌ Failed to fetch product:', result.message);
     }
+
+    return result;
   }
 
   // Get featured products
-  async getFeaturedProducts() {
-    if (this.useSupabase) {
-      try {
-        const { data, error } = await productHelpers.getFeaturedProducts();
-        
-        if (error) {
-          console.error('Supabase error:', error);
-          return {
-            success: false,
-            data: [],
-            message: error.message || 'Failed to load featured products'
-          };
-        }
-        
-        return {
-          success: true,
-          data: data || [],
-          message: 'Featured products loaded successfully'
-        };
-      } catch (error) {
-        console.error('Supabase error:', error);
-        return {
-          success: false,
-          data: [],
-          message: error.message || 'Failed to load featured products'
-        };
-      }
+  async getFeaturedProducts(limit) {
+    console.log('⭐ Fetching featured products');
+    
+    const cacheKey = `featured_${limit || 'all'}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
 
-    // Fallback to traditional API
-    try {
-      return await apiService.get('/products?featured=true');
-    } catch (error) {
-      console.error('Error fetching featured products:', error);
-      throw error;
+    const endpoint = `/products/featured${limit ? `?limit=${limit}` : ''}`;
+    const result = await this.makeRequest(endpoint);
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log(`✅ Fetched ${result.data?.length || 0} featured products`);
+    } else {
+      console.error('❌ Failed to fetch featured products:', result.message);
     }
+
+    return result;
   }
 
   // Get products by category
-  async getProductsByCategory(category) {
-    if (this.useSupabase) {
-      try {
-        if (category === 'all') {
-          return await this.getAllProducts();
-        }
-        
-        const { data, error } = await productHelpers.getProductsByCategory(category);
-        
-        if (error) {
-          console.error('Supabase error:', error);
-          return {
-            success: false,
-            data: [],
-            message: error.message || 'Failed to load products'
-          };
-        }
-        
-        return {
-          success: true,
-          data: data || [],
-          message: 'Products loaded successfully'
-        };
-      } catch (error) {
-        console.error('Supabase error:', error);
-        return {
-          success: false,
-          data: [],
-          message: error.message || 'Failed to load products'
-        };
-      }
+  async getProductsByCategory(category, params = {}) {
+    console.log('📂 Fetching products by category:', category);
+    
+    const cacheKey = `category_${category}_${JSON.stringify(params)}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
 
-    // Fallback to traditional API
-    try {
-      if (category === 'all') {
-        return await this.getAllProducts();
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null) {
+        queryParams.append(key, params[key]);
       }
-      return await apiService.get(`/products?category=${category}`);
-    } catch (error) {
-      console.error('Error fetching products by category:', error);
-      throw error;
-    }
-  }
+    });
 
-  // Get related products (for product detail page)
-  async getRelatedProducts(productId, category, limit = 4) {
-    try {
-      return await apiService.get(`/products/related/${productId}?category=${category}&limit=${limit}`);
-    } catch (error) {
-      console.error('Error fetching related products:', error);
-      throw error;
+    const endpoint = `/products/category/${category}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const result = await this.makeRequest(endpoint);
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log(`✅ Fetched ${result.data?.length || 0} products in category ${category}`);
+    } else {
+      console.error('❌ Failed to fetch products by category:', result.message);
     }
+
+    return result;
   }
 
   // Search products
   async searchProducts(query, filters = {}) {
-    try {
-      const params = {
-        search: query,
-        ...filters
-      };
-      return await this.getAllProducts(params);
-    } catch (error) {
-      console.error('Error searching products:', error);
-      throw error;
-    }
-  }
-
-  // ADMIN OPERATIONS - Create, Update, Delete products
-  
-  // Create new product (Admin Dashboard)
-  async createProduct(productData) {
-    if (this.useSupabase) {
-      try {
-        console.log('🛍️ Creating product with Supabase:', productData);
-        const { data, error } = await productHelpers.createProduct(productData);
-        
-        if (error) {
-          console.error('❌ Supabase create product error:', error);
-          throw new Error(error.message);
-        }
-        
-        console.log('✅ Product created successfully:', data);
-        
-        // Trigger real-time update to frontend
-        this.notifyProductChange('created', data);
-        
-        return {
-          success: true,
-          data: data,
-          message: 'Product created successfully'
-        };
-      } catch (error) {
-        console.error('Error creating product with Supabase:', error);
-        throw error;
-      }
-    }
+    console.log('🔎 Searching products:', query);
     
-    // Fallback to API service
-    try {
-      const response = await apiService.post('/admin/products', productData);
-      
-      // Trigger real-time update to frontend
-      this.notifyProductChange('created', response.data);
-      
-      return response;
-    } catch (error) {
-      console.error('Error creating product:', error);
-      throw error;
+    const cacheKey = `search_${query}_${JSON.stringify(filters)}`;
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
-  }
 
-  // Update existing product (Admin Dashboard)
-  async updateProduct(id, productData) {
-    if (this.useSupabase) {
-      try {
-        console.log('🛍️ Updating product with Supabase:', id, productData);
-        const { data, error } = await productHelpers.updateProduct(id, productData);
-        
-        if (error) {
-          console.error('❌ Supabase update product error:', error);
-          throw new Error(error.message);
-        }
-        
-        console.log('✅ Product updated successfully:', data);
-        
-        // Trigger real-time update to frontend
-        this.notifyProductChange('updated', data);
-        
-        return {
-          success: true,
-          data: data,
-          message: 'Product updated successfully'
-        };
-      } catch (error) {
-        console.error('Error updating product with Supabase:', error);
-        throw error;
+    const queryParams = new URLSearchParams({ search: query });
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== undefined && filters[key] !== null) {
+        queryParams.append(key, filters[key]);
       }
-    }
-    
-    // Fallback to API service
-    try {
-      const response = await apiService.put(`/admin/products/${id}`, productData);
-      
-      // Trigger real-time update to frontend
-      this.notifyProductChange('updated', response.data);
-      
-      return response;
-    } catch (error) {
-      console.error('Error updating product:', error);
-      throw error;
-    }
-  }
-
-  // Delete product (Admin Dashboard)
-  async deleteProduct(id) {
-    if (this.useSupabase) {
-      try {
-        console.log('🛍️ Deleting product with Supabase:', id);
-        const { error } = await productHelpers.deleteProduct(id);
-        
-        if (error) {
-          console.error('❌ Supabase delete product error:', error);
-          throw new Error(error.message);
-        }
-        
-        console.log('✅ Product deleted successfully:', id);
-        
-        // Trigger real-time update to frontend
-        this.notifyProductChange('deleted', { id });
-        
-        return {
-          success: true,
-          message: 'Product deleted successfully'
-        };
-      } catch (error) {
-        console.error('Error deleting product with Supabase:', error);
-        throw error;
-      }
-    }
-    
-    // Fallback to API service
-    try {
-      const response = await apiService.delete(`/admin/products/${id}`);
-      
-      // Trigger real-time update to frontend
-      this.notifyProductChange('deleted', { id });
-      
-      return response;
-    } catch (error) {
-      console.error('Error deleting product:', error);
-      throw error;
-    }
-  }
-
-  // Upload product image using ImageKit.io
-  async uploadProductImage(file, productId = null) {
-    try {
-      console.log('🖼️ Uploading product image to ImageKit.io:', file.name);
-      
-      // Import ImageKit service
-      const imagekitService = (await import('./imagekitService.js')).default;
-      
-      // Upload to ImageKit.io
-      const result = await imagekitService.uploadImage(file, {
-        folder: '/products'
-      });
-      
-      if (result.success) {
-        console.log('✅ Image uploaded successfully to ImageKit:', result.data.image_url);
-        return result;
-      } else {
-        throw new Error(result.message || 'Failed to upload to ImageKit');
-      }
-      
-    } catch (error) {
-      console.error('Error uploading image to ImageKit:', error);
-      
-      // Fallback to API service if ImageKit fails
-      try {
-        console.log('🔄 Falling back to API service for image upload...');
-        const formData = new FormData();
-        formData.append('image', file);
-        if (productId) {
-          formData.append('productId', productId);
-        }
-        
-        return await apiService.upload('/admin/products/upload-image', formData);
-      } catch (fallbackError) {
-        console.error('Both ImageKit and API fallback failed:', fallbackError);
-        throw new Error('Failed to upload image: ' + (error.message || 'Unknown error'));
-      }
-    }
-  }
-
-  // Get product categories
-  async getCategories() {
-    if (this.useSupabase) {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('name');
-        
-        if (error) {
-          console.error('Supabase error:', error);
-          return {
-            success: false,
-            data: [],
-            message: error.message || 'Failed to load categories'
-          };
-        }
-        
-        return {
-          success: true,
-          data: data || [],
-          message: 'Categories loaded successfully'
-        };
-      } catch (error) {
-        console.error('Supabase error:', error);
-        return {
-          success: false,
-          data: [],
-          message: error.message || 'Failed to load categories'
-        };
-      }
-    }
-
-    // Fallback to traditional API
-    try {
-      return await apiService.get('/categories');
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      throw error;
-    }
-  }
-
-  // Real-time product synchronization
-  notifyProductChange(action, productData) {
-    // Dispatch custom event for real-time updates
-    const event = new CustomEvent('productChange', {
-      detail: { action, product: productData }
     });
-    window.dispatchEvent(event);
+
+    const endpoint = `/products?${queryParams.toString()}`;
+    const result = await this.makeRequest(endpoint);
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log(`✅ Found ${result.data?.length || 0} products matching "${query}"`);
+    } else {
+      console.error('❌ Search failed:', result.message);
+    }
+
+    return result;
   }
 
-  // Listen for product changes (used by ProductContext)
-  onProductChange(callback) {
-    const handler = (event) => {
-      callback(event.detail);
-    };
-    window.addEventListener('productChange', handler);
+  // Get categories
+  async getCategories() {
+    console.log('📂 Fetching categories');
     
-    // Return cleanup function
-    return () => {
-      window.removeEventListener('productChange', handler);
-    };
-  }
-
-  // BULK OPERATIONS
-  
-  // Bulk update products (Admin Dashboard)
-  async bulkUpdateProducts(productIds, updateData) {
-    try {
-      return await apiService.patch('/admin/products/bulk-update', {
-        ids: productIds,
-        data: updateData
-      });
-    } catch (error) {
-      console.error('Error bulk updating products:', error);
-      throw error;
+    const cacheKey = 'categories';
+    const cached = this.getCached(cacheKey);
+    if (cached) {
+      return { success: true, data: cached };
     }
+
+    const result = await this.makeRequest('/users/categories');
+
+    if (result.success) {
+      this.setCache(cacheKey, result.data);
+      console.log(`✅ Fetched ${result.data?.length || 0} categories`);
+    } else {
+      console.error('❌ Failed to fetch categories:', result.message);
+    }
+
+    return result;
   }
 
-  // Bulk delete products (Admin Dashboard)
-  async bulkDeleteProducts(productIds) {
+  // Admin: Create product
+  async createProduct(productData) {
+    console.log('➕ ProductService - Creating product:', {
+      name: productData.name,
+      image_url: productData.image_url,
+      hasImageUrl: !!productData.image_url
+    });
+    
+    const result = await this.makeRequest('/products', {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    });
+
+    if (result.success) {
+      console.log('✅ ProductService - Product created successfully:', {
+        name: result.data?.name,
+        image_url: result.data?.image_url,
+        hasImageUrl: !!result.data?.image_url
+      });
+      this.clearCache(); // Clear cache to refresh data
+      this.notifyListeners('created', result.data);
+    } else {
+      console.error('❌ Failed to create product:', result.message);
+    }
+
+    return result;
+  }
+
+  // Admin: Update product
+  async updateProduct(id, updateData) {
+    console.log('✏️ Updating product:', id);
+    
+    const result = await this.makeRequest(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData)
+    });
+
+    if (result.success) {
+      this.clearCache(); // Clear cache to refresh data
+      this.notifyListeners('updated', result.data);
+      console.log('✅ Product updated:', result.data?.name);
+    } else {
+      console.error('❌ Failed to update product:', result.message);
+    }
+
+    return result;
+  }
+
+  // Admin: Delete product
+  async deleteProduct(id) {
+    console.log('🗑️ Deleting product:', id);
+    
+    const result = await this.makeRequest(`/products/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (result.success) {
+      this.clearCache(); // Clear cache to refresh data
+      this.notifyListeners('deleted', { id });
+      console.log('✅ Product deleted');
+    } else {
+      console.error('❌ Failed to delete product:', result.message);
+    }
+
+    return result;
+  }
+
+  // Get related products (placeholder implementation)
+  async getRelatedProducts(productId, limit = 4) {
+    console.log('🔗 Fetching related products for:', productId);
+    
+    // For now, just get random featured products
+    const result = await this.getFeaturedProducts(limit);
+    return result;
+  }
+
+  // Upload product image (placeholder)
+  async uploadProductImage(file, productId) {
     try {
-      const response = await apiService.delete('/admin/products/bulk-delete', {
-        body: JSON.stringify({ ids: productIds }),
-        headers: { 'Content-Type': 'application/json' }
+      console.log('📸 Starting product image upload to ImageKit:', file.name);
+      
+      // Generate unique filename with product context
+      const timestamp = Date.now();
+      const fileName = `products/${productId || 'temp'}_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      
+      // Upload to ImageKit
+      const uploadResult = await this.imageKit.uploadImage(file, {
+        fileName: fileName,
+        folder: '/products',
+        tags: ['product', 'demiland'],
+        useUniqueFileName: false // We're already making it unique
       });
       
-      // Trigger real-time update for each deleted product
-      productIds.forEach(id => {
-        this.notifyProductChange('deleted', { id });
-      });
+      if (uploadResult.success) {
+        console.log('✅ Image uploaded successfully to ImageKit:', uploadResult.data.image_url);
+        return uploadResult.data.image_url; // Return the URL directly
+      } else {
+        console.error('❌ ImageKit upload failed:', uploadResult.message);
+        throw new Error(uploadResult.message || 'Image upload failed');
+      }
       
-      return response;
     } catch (error) {
-      console.error('Error bulk deleting products:', error);
-      throw error;
+      console.error('❌ Upload error:', error);
+      throw new Error(`Image upload failed: ${error.message}`);
     }
   }
 
-  // INVENTORY MANAGEMENT
-  
-  // Update product stock
-  async updateProductStock(id, quantity) {
-    try {
-      const response = await apiService.patch(`/admin/products/${id}/stock`, {
-        quantity,
-        inStock: quantity > 0
-      });
-      
-      // Trigger real-time update
-      this.notifyProductChange('updated', response.data);
-      
-      return response;
-    } catch (error) {
-      console.error('Error updating product stock:', error);
-      throw error;
-    }
+  // Polling for real-time updates (simplified implementation)
+  startPolling(interval = 30000) {
+    console.log('🔄 Starting product polling');
+    // For now, we'll use event listeners instead of polling
+    // Real-time updates would be implemented with WebSockets
   }
 
-  // Get low stock products
-  async getLowStockProducts(threshold = 10) {
-    try {
-      return await apiService.get(`/admin/products/low-stock?threshold=${threshold}`);
-    } catch (error) {
-      console.error('Error fetching low stock products:', error);
-      throw error;
-    }
-  }
-
-  // ANALYTICS
-  
-  // Get product analytics
-  async getProductAnalytics(productId, period = '30d') {
-    try {
-      return await apiService.get(`/admin/products/${productId}/analytics?period=${period}`);
-    } catch (error) {
-      console.error('Error fetching product analytics:', error);
-      throw error;
-    }
-  }
-
-  // Get top selling products
-  async getTopSellingProducts(limit = 10) {
-    try {
-      return await apiService.get(`/admin/products/top-selling?limit=${limit}`);
-    } catch (error) {
-      console.error('Error fetching top selling products:', error);
-      throw error;
-    }
+  stopPolling() {
+    console.log('⏹️ Stopping product polling');
+    // For now, just a placeholder
   }
 }
 
@@ -569,19 +372,3 @@ class ProductService {
 const productService = new ProductService();
 
 export default productService;
-
-// Export specific methods for convenience
-export const {
-  getAllProducts,
-  getProductById,
-  getFeaturedProducts,
-  getProductsByCategory,
-  getRelatedProducts,
-  searchProducts,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  uploadProductImage,
-  getCategories,
-  onProductChange
-} = productService;

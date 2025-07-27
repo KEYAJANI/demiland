@@ -198,12 +198,12 @@ const ShopPage = () => {
                 onClick={() => handleProductClick(product.id)}
               >
                 {/* Product Image */}
-                <div className="aspect-square bg-gradient-to-br from-demiland-50 to-demiland-100 overflow-hidden relative">
+                <div className="aspect-square h-64 w-full flex-shrink-0 bg-gradient-to-br from-demiland-50 to-demiland-100 overflow-hidden relative">
                   {product.image_url || product.image ? (
                     <img 
                       src={product.image_url || product.image} 
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';

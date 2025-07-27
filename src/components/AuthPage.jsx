@@ -85,12 +85,7 @@ const AuthPage = () => {
         navigateTo('home');
       } else {
         console.error('❌ Login failed:', response);
-        // Handle specific error types
-        if (response.error === 'email_not_confirmed') {
-          setError('Your email is not confirmed. Please check your email and click the confirmation link, or contact support for assistance.');
-        } else {
-          setError(response.message || 'Login failed. Please try again.');
-        }
+        setError(response.message || 'Invalid email or password. Please try again.');
       }
     } catch (error) {
       console.error('💥 Login failed with error:', error);
@@ -120,12 +115,12 @@ const AuthPage = () => {
         lastName: registerData.lastName
       });
       
-      // Check if user was immediately logged in or needs email confirmation
-      if (response.data?.session) {
+      // Registration successful - user is automatically logged in
+      if (response.success) {
+        console.log('✅ Registration successful, navigating to home');
         navigateTo('home');
       } else {
-        // Email confirmation required - show message but don't navigate
-        setError('Registration successful! Please check your email to confirm your account before signing in.');
+        setError(response.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration failed:', error);

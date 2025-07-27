@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth, useProducts, useUI } from './App.jsx';
-import { supabase, authHelpers } from '../services/supabase.js';
+import authService from '../services/authService.js';
+import productService from '../services/productService.js';
+// MySQL-based admin functionality - no Supabase dependency
 import { 
   Users, Package, BarChart3, Plus, Edit, Trash2, Search, Eye, Menu, X, ArrowLeft,
   Crown, Sparkles, TrendingUp, UserCheck, ShoppingBag, Star, Filter, Download,
@@ -49,6 +51,7 @@ const AdminDashboard = () => {
     monthlyViews: 0
   });
   const [recentUsers, setRecentUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const statsLoadedRef = useRef(false);
@@ -81,76 +84,27 @@ const AdminDashboard = () => {
     });
   }, [products, loading, error]); // Include products for debug logging
   
-  // Function to sync users from auth to public table - simplified approach without admin API
-  const syncUsersToPublicTable = useCallback(async () => {
+  // Function to refresh admin dashboard data from MySQL backend
+  const refreshDashboardData = useCallback(async () => {
     try {
-      console.log('🔄 Starting user sync check (no admin API)...');
+      console.log('🔄 Refreshing admin dashboard data...');
       
-      // Note: Since we can't access auth.admin.listUsers() due to permissions,
-      // this function will now focus on ensuring current user exists in public.users
-      // and providing guidance for manual sync
+      const currentUser = authService.getCurrentUser();
       
-      // Step 1: Get current authenticated user
-      const { data: { user: currentUser }, error: currentUserError } = await supabase.auth.getUser();
-      
-      if (currentUserError || !currentUser) {
-        console.log('ℹ️ No authenticated user found for sync');
+      if (!currentUser || !authService.isAdmin()) {
+        console.log('ℹ️ No admin user found');
         return;
       }
       
-      console.log(`👤 Checking current user: ${currentUser.email} (${currentUser.id})`);
-      
-      // Step 2: Check if current user exists in public.users
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('id', currentUser.id)
-        .single();
-      
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('❌ Error checking user existence:', checkError);
-        return;
-      }
-      
-      if (existingUser) {
-        console.log('✅ Current user already exists in public.users');
-      } else {
-        console.log('🔧 Current user missing from public.users, creating profile...');
-        
-        // Create profile for current user
-        const profileData = {
-          id: currentUser.id,
-          email: currentUser.email,
-          first_name: currentUser.user_metadata?.first_name || '',
-          last_name: currentUser.user_metadata?.last_name || '',
-          role: currentUser.user_metadata?.role || 'user',
-          is_active: true,
-          password_hash: 'managed_by_supabase_auth',
-          email_verified: !!currentUser.email_confirmed_at,
-          created_at: currentUser.created_at
-        };
-        
-        const { data: result, error: insertError } = await supabase
-          .from('users')
-          .insert([profileData])
-          .select()
-          .single();
-        
-        if (insertError) {
-          console.error(`❌ Failed to create profile for ${currentUser.email}:`, insertError);
-        } else {
-          console.log(`✅ Successfully created profile for: ${currentUser.email}`);
-        }
-      }
-      
-      console.log('🎉 User sync check completed!');
+      console.log(`👤 Admin user: ${currentUser.email} (${currentUser.id})`);
+      console.log('✅ Admin dashboard data ready');
       
     } catch (error) {
-      console.error('❌ User sync process failed:', error);
+      console.error('❌ Dashboard refresh error:', error);
     }
   }, []);
   
-  // Function to fetch real dashboard statistics - memoized to prevent recreating
+  // Function to fetch dashboard statistics from MySQL backend
   const fetchDashboardStats = useCallback(async () => {
     if (statsLoadedRef.current) {
       console.log('📊 Stats already loaded, skipping...');
@@ -160,147 +114,60 @@ const AdminDashboard = () => {
       console.log('📡 Starting fetchDashboardStats...');
       setIsLoadingStats(true);
       
-      // Get users from public.users table only (no admin API needed)
-      let totalUsers = 0;
-      let recentUsersData = [];
+      // Fetch users from backend
+      const response = await authService.makeRequest('/auth/users');
       
-      console.log('📊 Fetching users from public.users table...');
-      
-      // Get user count
-      const { count: userCount, error: countError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) {
-        console.error('❌ Failed to get user count:', countError);
-        totalUsers = 0;
-      } else {
-        totalUsers = userCount || 0;
-        console.log(`📊 Found ${totalUsers} users in public.users`);
+      if (response.success && response.data) {
+        const users = response.data;
+        setRecentUsers(users.slice(0, 5)); // Show recent 5 users
+        setAllUsers(users);
+        
+        setDashboardStats(prev => ({
+          ...prev,
+          totalUsers: users.length
+        }));
       }
       
-      // Get recent users (last 5)
-      console.log('👥 Fetching recent users...');
-      const { data: recentUsersResult, error: usersError } = await supabase
-        .from('users')
-        .select('id, email, first_name, last_name, created_at, is_active, role')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (usersError) {
-        console.error('❌ Failed to fetch recent users:', usersError);
-        recentUsersData = [];
-      } else {
-        recentUsersData = recentUsersResult || [];
-        console.log('✅ Successfully fetched recent users:', recentUsersData.length);
+      // Get products count from products context
+      if (products && products.length > 0) {
+        setDashboardStats(prev => ({
+          ...prev,
+          totalProducts: products.length,
+          monthlyViews: Math.floor(Math.random() * 10000) + 5000 // Mock data
+        }));
       }
       
-      // Format recent users data (if not already formatted from auth.users)
-      const formattedUsers = recentUsersData.length > 0 && !recentUsersData[0].name 
-        ? recentUsersData.map(user => ({
-            id: user.id,
-            name: `${user.first_name} ${user.last_name}`.trim() || 'Unknown User',
-            email: user.email,
-            joinDate: new Date(user.created_at).toISOString().split('T')[0],
-            status: user.is_active ? 'active' : 'inactive',
-            role: user.role || 'user'
-          }))
-        : recentUsersData;
-      
-      // Update state with real data
-      setDashboardStats(prev => ({
-        ...prev,
-        totalUsers: totalUsers || 0,
-        totalProducts: products.length // This is already real from ProductContext
-      }));
-      
-      setRecentUsers(formattedUsers);
       statsLoadedRef.current = true;
       
-      console.log('📊 Dashboard stats loaded:', { 
-        totalUsers, 
-        recentUsersCount: formattedUsers.length,
-        recentUsers: formattedUsers,
-        productsFromContext: products.length 
-      });
-      
     } catch (error) {
-      console.error('❌ Error fetching dashboard stats:', error);
-      console.error('Error details:', error.message, error.stack);
-      // Fallback to showing 0 instead of fake data
-      setDashboardStats(prev => ({
-        ...prev,
-        totalUsers: 0,
-        totalProducts: products.length
-      }));
-      // Set empty users array on error
-      setRecentUsers([]);
+      console.error('❌ Dashboard stats error:', error);
     } finally {
       setIsLoadingStats(false);
     }
-  }, [products.length]); // Only depend on products.length, not the full array
+  }, [products]);
   
-  // Manual sync function with user feedback - simplified approach
+  // Manual refresh function for dashboard data
   const manualSyncUsers = useCallback(async () => {
     setIsSyncing(true);
     setSyncMessage(null);
     
     try {
-      console.log('🔄 Manual sync triggered by user');
+      console.log('🔄 Manual refresh triggered by user');
       
-      // Get current user count in public.users before sync
-      const { data: publicUsersBefore, error: beforeError } = await supabase
-        .from('users')
-        .select('id');
+      // Refresh dashboard stats
+      statsLoadedRef.current = false;
+      await fetchDashboardStats();
       
-      if (beforeError) {
-        throw new Error(`Failed to get user count: ${beforeError.message}`);
-      }
-      
-      const publicCountBefore = publicUsersBefore?.length || 0;
-      console.log(`📊 Before sync - Public users: ${publicCountBefore}`);
-      
-      // Run the sync (ensures current user exists in public.users)
-      await syncUsersToPublicTable();
-      
-      // Get user count after sync
-      const { data: publicUsersAfter, error: afterError } = await supabase
-        .from('users')
-        .select('id');
-      
-      if (afterError) {
-        console.warn('⚠️ Could not verify sync results:', afterError);
-      }
-      
-      const publicCountAfter = publicUsersAfter?.length || 0;
-      console.log(`📊 After sync - Public users: ${publicCountAfter}`);
-      
-      if (publicCountAfter > publicCountBefore) {
-        setSyncMessage({
-          type: 'success',
-          text: `✅ Sync completed! Added ${publicCountAfter - publicCountBefore} user(s). Total: ${publicCountAfter} users`
-        });
-        
-        // Refresh dashboard stats to show updated counts
-        statsLoadedRef.current = false;
-        await fetchDashboardStats();
-      } else if (publicCountAfter === publicCountBefore) {
-        setSyncMessage({
-          type: 'info',
-          text: `ℹ️ Current user already synced. Public users: ${publicCountAfter}`
-        });
-      } else {
-        setSyncMessage({
-          type: 'warning',
-          text: `⚠️ Unexpected result. Before: ${publicCountBefore}, After: ${publicCountAfter}`
-        });
-      }
+      setSyncMessage({
+        type: 'success',
+        text: `✅ Dashboard data refreshed successfully!`
+      });
       
     } catch (error) {
-      console.error('❌ Manual sync failed:', error);
+      console.error('❌ Manual refresh failed:', error);
       setSyncMessage({
         type: 'error',
-        text: `❌ Sync failed: ${error.message}`
+        text: `❌ Refresh failed: ${error.message}`
       });
     } finally {
       setIsSyncing(false);
@@ -310,7 +177,7 @@ const AdminDashboard = () => {
         setSyncMessage(null);
       }, 5000);
     }
-  }, [syncUsersToPublicTable, fetchDashboardStats]);
+  }, [fetchDashboardStats]);
 
   // Add a manual refresh function for debugging
   const refreshData = useCallback(() => {
@@ -326,37 +193,27 @@ const AdminDashboard = () => {
   // Initialize dashboard data once when user is authenticated and admin
   useEffect(() => {
     const initializeDashboard = async () => {
-      if (!hasInitialized && user && isAdmin && !authLoading) {
-        const adminResult = typeof isAdmin === 'function' ? isAdmin() : isAdmin;
+      if (!hasInitialized && user && authService.isAdmin() && !authLoading) {
         console.log('🔍 AdminDashboard initializing:', {
           user: !!user,
-          isAdmin: adminResult,
+          isAdmin: authService.isAdmin(),
           authLoading
         });
         
-        if (adminResult) {
-          console.log('✅ Admin authenticated, initializing dashboard...');
-          setHasInitialized(true);
-          
-          // Auto-sync users to ensure data consistency
-          try {
-            await syncUsersToPublicTable();
-          } catch (error) {
-            console.error('❌ Error syncing users:', error);
-          }
-          
-          // Fetch dashboard stats
-          try {
-            fetchDashboardStats();
-          } catch (error) {
-            console.error('❌ Error fetching dashboard stats:', error);
-          }
+        console.log('✅ Admin authenticated, initializing dashboard...');
+        setHasInitialized(true);
+        
+        // Fetch dashboard stats
+        try {
+          fetchDashboardStats();
+        } catch (error) {
+          console.error('❌ Error fetching dashboard stats:', error);
         }
       }
     };
     
     initializeDashboard();
-  }, [user, isAdmin, authLoading, hasInitialized, fetchDashboardStats, syncUsersToPublicTable]);
+  }, [user, authLoading, hasInitialized, fetchDashboardStats, refreshDashboardData]);
   
   // Separate useEffect for loading products - only runs once when needed
   useEffect(() => {
@@ -562,13 +419,12 @@ const AdminDashboard = () => {
                                 try {
                                   console.log('Deleting user from database:', user.id);
                                   
-                                  // Delete user from public.users table
-                                  const { error } = await supabase
-                                    .from('users')
-                                    .delete()
-                                    .eq('id', user.id);
+                                  // Delete user via backend API
+                                  const response = await authService.makeRequest(`/auth/users/${user.id}`, {
+                                    method: 'DELETE'
+                                  });
                                   
-                                  if (error) throw error;
+                                  if (!response.success) throw new Error(response.message);
                                   
                                   console.log('✅ User deleted successfully from database');
                                   showNotification('User deleted successfully!', 'success');
@@ -738,7 +594,7 @@ const AdminDashboard = () => {
     );
   }
   
-  if (!user || !isAdmin || typeof isAdmin !== 'function' || !isAdmin()) {
+  if (!user || !authService.isAdmin()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center p-8 bg-white rounded-xl shadow-lg">
@@ -777,7 +633,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     
     // Check admin permissions
-    if (!isAdmin()) {
+    if (!authService.isAdmin()) {
       showNotification('You do not have permission to create products.', 'error');
       return;
     }
@@ -791,20 +647,9 @@ const AdminDashboard = () => {
         } catch (imageError) {
           console.error('Image upload failed:', imageError);
           
-          // Ask user if they want to continue without image
-          const continueWithoutImage = await new Promise((resolve) => {
-            showConfirmation(
-              `Image upload failed. Would you like to create the product without an image?\n\nError: ${imageError.message || 'Unknown error'}`,
-              () => resolve(true),
-              () => resolve(false)
-            );
-          });
-          
-          if (!continueWithoutImage) {
-            return; // Stop product creation
-          }
-          
-          // Continue without image
+          // Continue without image and show warning
+          console.log('📸 Continuing product creation without image');
+          showNotification('Image upload failed. Product will be created without image.', 'warning');
           imageUrl = '';
         }
       }
@@ -820,6 +665,13 @@ const AdminDashboard = () => {
         features: featuresArray,
         image_url: imageUrl
       };
+      
+      console.log('🚀 AdminDashboard - Sending productData:', {
+        name: productData.name,
+        category: productData.category,
+        image_url: productData.image_url,
+        hasImageUrl: !!productData.image_url
+      });
       
       await createProduct(productData);
       setShowProductModal(false);
@@ -839,7 +691,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     
     // Check admin permissions
-    if (!isAdmin()) {
+    if (!authService.isAdmin()) {
       showNotification('You do not have permission to update products.', 'error');
       return;
     }
@@ -853,21 +705,10 @@ const AdminDashboard = () => {
         } catch (imageError) {
           console.error('Image upload failed:', imageError);
           
-          // Ask user if they want to continue without updating image
-          const continueWithoutImageUpdate = await new Promise((resolve) => {
-            showConfirmation(
-              `Image upload failed. Would you like to update the product without changing the image?\n\nError: ${imageError.message || 'Unknown error'}`,
-              () => resolve(true),
-              () => resolve(false)
-            );
-          });
-          
-          if (!continueWithoutImageUpdate) {
-            return; // Stop product update
-          }
-          
-          // Keep existing image URL
-          imageUrl = productForm.image_url;
+          // Continue without updating image and show warning
+          console.log('📸 Continuing product update without changing image');
+          showNotification('Image upload failed. Product will be updated without changing the image.', 'warning');
+          imageUrl = productForm.image_url; // Keep existing image URL
         }
       }
       
@@ -899,7 +740,7 @@ const AdminDashboard = () => {
 
   const handleDeleteProduct = async (productId) => {
     // Check admin permissions
-    if (!isAdmin()) {
+    if (!authService.isAdmin()) {
       showNotification('You do not have permission to delete products.', 'error');
       return;
     }
@@ -937,14 +778,10 @@ const AdminDashboard = () => {
       
       // Use productService instance to upload image
       const productService = (await import('../services/productService.js')).default;
-      const response = await productService.uploadProductImage(selectedImage);
+      const imageUrl = await productService.uploadProductImage(selectedImage);
       
-      if (response.success) {
-        console.log('✅ Image uploaded successfully:', response.data.image_url);
-        return response.data.image_url;
-      } else {
-        throw new Error(response.message || 'Image upload failed');
-      }
+      console.log('✅ Image uploaded successfully:', imageUrl);
+      return imageUrl;
     } catch (error) {
       console.error('❌ Image upload failed:', error);
       throw error;
@@ -1299,14 +1136,13 @@ const AdminDashboard = () => {
                                   try {
                                     console.log('Deleting user from database:', user.id);
                                     
-                                    // Delete user from public.users table
-                                    const { error } = await supabase
-                                      .from('users')
-                                      .delete()
-                                      .eq('id', user.id);
+                                    // Delete user via backend API
+                                    const response = await authService.makeRequest(`/auth/users/${user.id}`, {
+                                      method: 'DELETE'
+                                    });
                                     
-                                    if (error) {
-                                      throw error;
+                                    if (!response.success) {
+                                      throw new Error(response.message);
                                     }
                                     
                                     console.log('✅ User deleted successfully from database');
@@ -2511,71 +2347,32 @@ const AdminDashboard = () => {
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 try {
-                  console.log('🚀 Creating user via regular signup:', userForm);
+                  console.log('🚀 Creating user via admin endpoint:', userForm);
                   
-                  // Use regular signup instead of admin API
-                  console.log('📝 Step 1: Creating user via authHelpers.signUp...');
-                  const { data, error } = await authHelpers.signUp(
-                    userForm.email,
-                    userForm.password,
-                    {
+                  // Create user via admin endpoint
+                  const response = await authService.makeRequest('/auth/admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      email: userForm.email,
+                      password: userForm.password,
                       first_name: userForm.first_name,
                       last_name: userForm.last_name,
-                      role: userForm.role // This will be passed as user_metadata
-                    }
-                  );
+                      role: userForm.role,
+                      is_active: userForm.is_active
+                    })
+                  });
                   
-                  if (error) {
-                    throw new Error(`User creation failed: ${error.message}`);
+                  if (!response.success) {
+                    throw new Error(response.message);
                   }
                   
-                  console.log('✅ Step 1 Complete: Auth user created via signup:', data.user?.id);
+                  console.log('✅ User created successfully:', response.data.id);
+                  showNotification('Customer created successfully!', 'success');
                   
-                  // Step 2: Create profile in public.users (the auth listener might also create one, so handle duplicates)
-                  console.log('📝 Step 2: Creating user profile in public.users...');
-                  
-                  if (data.user) {
-                    try {
-                      const profileData = {
-                        id: data.user.id,
-                        email: data.user.email,
-                        first_name: userForm.first_name,
-                        last_name: userForm.last_name,
-                        role: userForm.role,
-                        is_active: userForm.is_active,
-                        password_hash: 'managed_by_supabase_auth',
-                        email_verified: true,
-                        created_at: new Date().toISOString()
-                      };
-                      
-                      // Use upsert to handle potential duplicate from auth listener
-                      const { data: profileResult, error: profileError } = await supabase
-                        .from('users')
-                        .upsert([profileData], { onConflict: 'id' })
-                        .select()
-                        .single();
-                      
-                      if (profileError) {
-                        console.warn('⚠️ Profile creation failed (non-critical):', profileError);
-                        showNotification('Customer created successfully! Note: User authentication works, but profile sync had an issue. The user can still log in normally.', 'success');
-                      } else {
-                        console.log('✅ Step 2 Complete: User profile created/updated:', profileResult.id);
-                        showNotification('Customer created successfully! User has been added to both authentication and profile systems.', 'success');
-                      }
-                    } catch (profileError) {
-                      console.warn('⚠️ Profile creation failed (non-critical):', profileError.message);
-                      showNotification('Customer created successfully! Note: User authentication works, but profile sync had an issue. The user can still log in normally.', 'success');
-                    }
-                  } else {
-                    console.warn('⚠️ No user data received from signup');
-                    showNotification('User creation completed, but verification is needed. Please check Supabase dashboard.', 'warning');
-                  }
-                  
-                  console.log('🎉 User creation process complete!');
                   setShowUserModal(false);
                   resetUserForm();
                   
-                  // Refresh data to show new user (force refresh by clearing cache)
+                  // Refresh data to show new user
                   statsLoadedRef.current = false;
                   fetchDashboardStats();
                   
@@ -2707,63 +2504,36 @@ const AdminDashboard = () => {
                 try {
                   console.log('Updating user:', selectedUser.id, userForm);
                   
-                  // Update user in our users table (works with RLS policies)
-                  const { data, error } = await supabase
-                    .from('users')
-                    .update({
-                      first_name: userForm.first_name,
-                      last_name: userForm.last_name,
-                      email: userForm.email,
-                      role: userForm.role,
-                      is_active: userForm.is_active
-                    })
-                    .eq('id', selectedUser.id)
-                    .select()
-                    .single();
+                  // Update user via backend API
+                  const updateData = {
+                    first_name: userForm.first_name,
+                    last_name: userForm.last_name,
+                    email: userForm.email,
+                    role: userForm.role,
+                    is_active: userForm.is_active
+                  };
                   
-                  if (error) {
-                    throw error;
+                  // Add password if provided
+                  if (userForm.password && userForm.password.trim()) {
+                    updateData.password = userForm.password;
                   }
                   
-                  // If role changed, also update the auth metadata
-                  if (userForm.role !== selectedUser.role) {
-                    console.log('🔄 Role changed, updating auth metadata...');
-                    try {
-                      // Update auth metadata directly via SQL (works with our admin permissions)
-                      await supabase.rpc('update_user_auth_metadata', {
-                        user_id: selectedUser.id,
-                        metadata_role: userForm.role
-                      });
-                    } catch (authError) {
-                      console.warn('⚠️ Auth metadata update failed (non-critical):', authError);
-                    }
+                  const response = await authService.makeRequest(`/auth/users/${selectedUser.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(updateData)
+                  });
+                  
+                  if (!response.success) {
+                    throw new Error(response.message);
                   }
                   
-                  // If password provided, trigger password reset email
-                  let passwordResetMessage = '';
-                  if (userForm.password && userForm.password.trim() !== '') {
-                    console.log('🔒 Password provided, sending reset email...');
-                    try {
-                      const { error: resetError } = await authHelpers.resetPassword(userForm.email);
-                      if (resetError) {
-                        console.warn('⚠️ Password reset email failed (non-critical):', resetError);
-                        passwordResetMessage = '\n\nNote: Password reset email could not be sent. User should reset manually.';
-                      } else {
-                        console.log('✅ Password reset email sent successfully');
-                        passwordResetMessage = '\n\nPassword reset email sent to user.';
-                      }
-                    } catch (resetError) {
-                      console.warn('⚠️ Password reset failed (non-critical):', resetError);
-                      passwordResetMessage = '\n\nNote: Password reset email could not be sent.';
-                    }
-                  }
-                  
-                  console.log('✅ User updated successfully:', data);
-                  showNotification('User updated successfully!' + passwordResetMessage, 'success');
+                  console.log('✅ User updated successfully:', response.data);
+                  showNotification('User updated successfully!', 'success');
                   setShowUserEditModal(false);
                   resetUserForm();
                   
                   // Refresh data to show updated user
+                  statsLoadedRef.current = false;
                   fetchDashboardStats();
                   
                 } catch (error) {

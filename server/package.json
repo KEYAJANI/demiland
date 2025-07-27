@@ -1,0 +1,35 @@
+{
+  "name": "demiland-backend",
+  "version": "1.0.0",
+  "description": "Backend API server for DEMILAND beauty brand application",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "node src/test-connection.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.6.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "beauty",
+    "cosmetics",
+    "api",
+    "mysql",
+    "express"
+  ],
+  "author": "DEMILAND",
+  "license": "MIT"
+}

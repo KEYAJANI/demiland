@@ -255,6 +255,124 @@ class ImageKitService {
   }
 
   /**
+   * Extract file path from ImageKit URL
+   * @param {string} imageUrl - The ImageKit image URL
+   */
+  extractFilePathFromUrl(imageUrl) {
+    try {
+      if (!imageUrl || !imageUrl.includes('imagekit.io')) {
+        return null;
+      }
+      
+      // Remove the base URL and transformation parameters
+      const url = new URL(imageUrl);
+      let filePath = url.pathname;
+      
+      // Remove transformation parameters (everything before /tr:)
+      if (filePath.includes('/tr:')) {
+        filePath = filePath.split('/tr:')[1];
+        // Remove the transformation part and get the actual file path
+        const parts = filePath.split('/');
+        filePath = '/' + parts.slice(1).join('/');
+      }
+      
+      // Handle direct URLs without transformations
+      if (filePath.startsWith(`/${this.config.imagekitId}/`)) {
+        filePath = filePath.replace(`/${this.config.imagekitId}`, '');
+      }
+      
+      return filePath;
+    } catch (error) {
+      console.error('❌ Failed to extract file path from URL:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Find file ID by file path using ImageKit List Files API
+   * @param {string} filePath - The file path to search for
+   */
+  async findFileIdByPath(filePath) {
+    try {
+      if (!filePath) {
+        throw new Error('File path is required');
+      }
+
+      // Use ImageKit List Files API to find the file
+      const response = await fetch(`https://api.imagekit.io/v1/files?path=${encodeURIComponent(filePath)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${btoa(this.config.privateKey + ':')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const files = await response.json();
+      
+      if (files.length === 0) {
+        throw new Error('File not found in ImageKit');
+      }
+
+      // Return the first matching file's ID
+      return files[0].fileId;
+      
+    } catch (error) {
+      console.error('❌ Failed to find file ID by path:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete image by URL (combines path extraction and file ID lookup)
+   * @param {string} imageUrl - The ImageKit image URL to delete
+   */
+  async deleteImageByUrl(imageUrl) {
+    try {
+      console.log('🗑️ Starting ImageKit deletion for URL:', imageUrl);
+      
+      if (!imageUrl || !imageUrl.includes('imagekit.io')) {
+        console.log('⏭️ Skipping deletion - not an ImageKit URL');
+        return {
+          success: true,
+          message: 'No ImageKit image to delete'
+        };
+      }
+
+      // Extract file path from URL
+      const filePath = this.extractFilePathFromUrl(imageUrl);
+      if (!filePath) {
+        throw new Error('Could not extract file path from URL');
+      }
+
+      console.log('📂 Extracted file path:', filePath);
+
+      // Find file ID by path
+      const fileId = await this.findFileIdByPath(filePath);
+      console.log('🆔 Found file ID:', fileId);
+
+      // Delete the image
+      const result = await this.deleteImage(fileId);
+      
+      if (result.success) {
+        console.log('✅ ImageKit image deleted successfully');
+      }
+      
+      return result;
+      
+    } catch (error) {
+      console.error('❌ ImageKit deletion by URL failed:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: `Failed to delete image from ImageKit: ${error.message}`
+      };
+    }
+  }
+
+  /**
    * Get optimized image URL with transformations
    * @param {string} imagePath - The ImageKit image path
    * @param {Object} transformations - Transformation options
